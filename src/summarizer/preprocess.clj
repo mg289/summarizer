@@ -50,24 +50,16 @@
         model (new POSModel modelInputStream)]
     (new POSTaggerME model)))
 
-(defn POS-tag-for-sentence
-  "Takes a coll of tokens. Returns a coll of pos tags.
-   Attempts part-of-speech tagging using a trained model."
-  [pos-tagger]
-  (println "Determining parts of speech...")
-  (fn [tokens] (. pos-tagger tag tokens)))
-
 (defn POS-tag
   "Attempts part-of-speech tagging using trained model."
   [sentences pos-tagger]
-  (map (POS-tag-for-sentence pos-tagger) sentences))
+  (map (fn [tokens] (. pos-tagger tag tokens)) sentences))
 
 (defn get-tokenizer
   []
   (let [modelInputStream (new FileInputStream token-model)
         model (new TokenizerModel modelInputStream)]
     (new TokenizerME model)))
-
 
 (defn token-split-for-sentence
   "Takes a sentence. Returns a coll of tokens.
