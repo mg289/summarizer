@@ -2,6 +2,8 @@
   (:use [summarizer.preprocess :only [sentence-split preprocess]]
 	[summarizer.rank :only [rank]]))
 
+(def length-factor 0.25)
+
 (defn summarize
   [file]
   "Takes a filename. Reads its contents and writes to summary.txt a string of
@@ -11,8 +13,7 @@
 	sentences (sentence-split text)
         preprocessed (preprocess sentences)
         ranks (rank preprocessed)
-	;; Reduce the length to 1/4 of original
-        summ-length (/ (count sentences) 4)
+        summ-length (* (count sentences) length-factor)
 	;; Sort first summ-length sentences and get indices
         chosen-indices (keys (sort (take summ-length ranks)))
 	;; Get sentences at chosen indices, separate with spaces and make string
