@@ -19,19 +19,6 @@
 (def sentence-model (str base-path "en-sent.bin"))
 (def token-model (str base-path "en-token.bin"))
 (def pos-model (str base-path "en-pos-maxent.bin"))
-(def pos-map {"J" "ADJECTIVE" "N" "NOUN" "R" "ADVERB" "V" "VERB"})
-
-(defn get-lemma
-  "Returns lemmatization from wordnet. If not
-   found, returns token."
-  [word]
-  (let [token (key word)
-        pos (.substring (val word) 0 1)
-        pos-jwnl (get pos-map pos)
-        synset (get-synset pos-jwnl token)]
-    (if synset
-       synset
-       token)))
 
 (defn remove?
   "True if token is deemed insignificant."

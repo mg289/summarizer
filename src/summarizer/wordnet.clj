@@ -12,20 +12,27 @@
 (. JWNL initialize input-stream)
 (def wordnet (. Dictionary getInstance))
 
+(def pos-map {"J" (. POS ADJECTIVE) 
+              "N" (. POS NOUN)
+              "R" (. POS ADVERB)
+              "V" (. POS VERB)})
+
 (defn get-synset
   [pos token]
   "Takes a word and its part of speech for lookup in wordnet.
    If found, returns lemma. Otherwise, returns nil" 
-  (let [index-word
-        (if (= pos "ADJECTIVE")
-          (. wordnet getIndexWord (. POS ADJECTIVE) token)
-          (if (= pos "ADVERB")
-            (. wordnet getIndexWord (. POS ADVERB) token)
-            (if (= pos "NOUN")
-              (. wordnet getIndexWord (. POS NOUN) token)
-              (if (= pos "VERB")
-                (. wordnet getIndexWord (. POS VERB) token)))))]
-    (if index-word
-      (let [synset (. index-word getSense 1)]
-        (if synset
-          (. (. synset getWord 0) getLemma))))))
+  (if-let [index-word (. wordnet getIndexWord pos token)]
+    (if-let [synset (. index-word getSense 1)]
+      (. (. synset getWord 0) getLemma))))
+
+(defn get-lemma
+  "Returns lemmatization from wordnet. If not
+   found, returns token."
+  [word]
+  (let [token (key word)
+        pos (.substring (val word) 0 1)]
+    (if-let [pos-jwnl (get pos-map pos)]
+      (if-let [synset (get-synset pos-jwnl token)]
+        synset
+        token)
+      token)))
