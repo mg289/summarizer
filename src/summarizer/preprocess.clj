@@ -5,14 +5,19 @@
 (ns summarizer.preprocess
   (:use [summarizer.stopwords]
         [summarizer.wordnet]
-        [clojure.contrib.string :only [lower-case substring?]])
+        [clojure.string :only [lower-case]])
   (:import opennlp.tools.sentdetect.SentenceModel
            opennlp.tools.sentdetect.SentenceDetectorME
            opennlp.tools.tokenize.TokenizerModel
            opennlp.tools.tokenize.TokenizerME
            opennlp.tools.postag.POSModel
            opennlp.tools.postag.POSTaggerME
-	   java.io.FileInputStream))
+           java.io.FileInputStream))
+
+(defn ^String substring?
+  "True if s contains the substring."
+  [substring ^String s]
+  (.contains s substring))
 
 ;; Trained NLP models
 (def base-path "resources/models/")
@@ -29,7 +34,7 @@
         (substring? "'" token))))
 
 (defn reduce-tokens-for-sentence
-  "Takes a coll of token/pos pairs. 
+  "Takes a coll of token/pos pairs.
    Returns a coll of lemmatized, relevant tokens"
   [sentence]
   (let [filtered (remove remove? sentence)
@@ -89,8 +94,8 @@
    sets of lemmatized, relevant tokens"
   [sentences]
   (let [tokenizer (get-tokenizer)
-	tokens (token-split sentences tokenizer)
-	pos-tagger (get-pos-tagger)
+        tokens (token-split sentences tokenizer)
+        pos-tagger (get-pos-tagger)
         pos (POS-tag tokens pos-tagger)
         token-pos (map zipmap tokens pos)
         reduced-tokens (reduce-tokens token-pos)]
