@@ -1,8 +1,8 @@
 (ns summarizer.rank
-  (:use [clojure.contrib.generic.math-functions :only [abs log]])
   (:import org.jgrapht.graph.SimpleWeightedGraph
-   	   org.jgrapht.graph.DefaultWeightedEdge
-	   org.jgrapht.Graphs))
+           org.jgrapht.graph.DefaultWeightedEdge
+           org.jgrapht.Graphs
+           java.lang.Math))
 
 ;; Graph: SimpleWeightedGraph provided by JGraphT (therefore will be mutated)
 ;; Vertices: Map of id (num), sentence pairs
@@ -32,8 +32,8 @@
   (let [sentenceA (val vertexA)
         sentenceB (val vertexB)
         overlap (calc-overlap sentenceA sentenceB)
-        log-length-A (log (count sentenceA))
-        log-length-B (log (count sentenceB))
+        log-length-A (Math/log (count sentenceA))
+        log-length-B (Math/log (count sentenceB))
         log-sum (+ log-length-A log-length-B)]
     (if (> log-sum 0)
       (/ overlap log-sum)
@@ -41,7 +41,7 @@
 
 (defn update-totals
   "Updates scores based on constant weight-totals
-   and the score updated in previous iteration" 
+   and the score updated in previous iteration"
   [func graph weight-totals scores]
   (let [vertices (. graph vertexSet)]
     (loop [update-map {}
@@ -49,7 +49,7 @@
       (if (seq v)
         (let [fst (first v)]
           (recur
-            (assoc update-map (key fst) 
+            (assoc update-map (key fst)
                   (func graph fst weight-totals scores))
            (rest v)))
         update-map))))
@@ -68,7 +68,7 @@
       0)))
 
 (defn update-score-for-vertex
-  "Returns new score for vertex using constant 
+  "Returns new score for vertex using constant
    weight-totals and scores updated from previous run"
   [graph vertex weight-totals scores]
   (let [edges (. graph edgesOf vertex)
@@ -83,7 +83,7 @@
               neighbour (if (= src vertex) trg src)
               v (if (= src vertex) src trg)]
           (recur
-           (+ summation 
+           (+ summation
               (add-to-summation neighbour weight weight-totals scores))
            (rest e)))
         (+ (- 1 damping-factor) (* damping-factor summation))))))
@@ -100,25 +100,25 @@
   (fn [neighbour]
     (let [weight (calc-weight vertex neighbour)]
       (if (and (> weight 0) (not (= vertex neighbour)))
-	(do
-	  (. Graphs addEdgeWithVertices graph vertex neighbour weight)
-	  weight)
-	0))))  
+        (do
+          (. Graphs addEdgeWithVertices graph vertex neighbour weight)
+          weight)
+        0))))
 
 (defn add-weighted-edges
   "Adds all non-zero edges to the graph"
   [graph]
   (let [vertices (. graph vertexSet)]
     (loop [v vertices
-	   weight-totals {}]
+           weight-totals {}]
       (if (seq v)
-	(let [vertex (first v)
-	      weights (map (add-weighted-edges-for-vertex graph vertex) 
+        (let [vertex (first v)
+              weights (map (add-weighted-edges-for-vertex graph vertex)
                            vertices)
-	      weight-total (reduce + weights)]
-	  (recur (rest v)
-		 (assoc weight-totals (key vertex) weight-total)))
-	weight-totals))))
+              weight-total (reduce + weights)]
+          (recur (rest v)
+                 (assoc weight-totals (key vertex) weight-total)))
+        weight-totals))))
 
 (defn add-vertices
   "Adds a vertex for each element of vertices coll"
@@ -166,17 +166,17 @@
       (if (< id s-count)
         (let [new (get new-scores id)
               old (get old-scores id)]
-          (if (>= (abs (- new old)) convergence-threshold)
+          (if (>= (Math/abs (- new old)) convergence-threshold)
             false
             (recur (inc id))))
         true))))
-      
+
 (defn run-algorithm
   "Updates scores until convergence is reached"
   [graph weight-totals old-scores rec]
   (let [new-scores (update-scores graph weight-totals old-scores)]
     (if (and (< rec max-iterations)
-	     (not (converge? new-scores old-scores)))
+             (not (converge? new-scores old-scores)))
        (run-algorithm graph weight-totals new-scores (inc rec))
       new-scores)))
 
@@ -190,4 +190,3 @@
         results (run-algorithm graph weight-totals scores 0)]
     (into (sorted-map-by (fn [k1 k2] (>= (get results k1) (get results k2))))
           results)))
-
